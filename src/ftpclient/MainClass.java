@@ -13,20 +13,21 @@ import java.io.IOException;
  */
 public class MainClass {
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String args[]) throws IOException, InterruptedException {
         FTPClient client = new FTPClient();
-        String host = "193.219.28.2";
+        String host = "ftp.nluug.nl";
         int port = 21;
         String user = "anonymous";
-        String pass = "karmaz@st.amu.edu.pl";
+        String pass = "anon@anon.passwords.com";
         client.connect(host, port, user, pass);
+        //client.port(49200);
         client.syst();
         client.list();
-        //client.port(49200);
-        /*client.cd("/pub/os/Linux/distr/tinycorelinux/6.x/x86/release/");
-         client.list();
-         client.retr("TinyCore-6.0.iso");
-         client.retr("TinyCore-6.0.iso.md5.txt");*/
+        //client.retr("darkforest.jpg");
+        //client.cd("/pub/os/Linux/distr/tinycorelinux/6.x/x86/release/");
+        //client.list();
+        //client.retr("TinyCore-6.0.iso");
+        //client.retr("TinyCore-6.0.iso.md5.txt");
         //client.cup();
         // client.cd("/pub/os/Linux/distr/linuxmint/iso/stable/debian/");
         // client.retr("linuxmint-xfce-201104-dvd-64bit.iso");

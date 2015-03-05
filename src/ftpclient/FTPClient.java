@@ -17,7 +17,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.CharBuffer;
 import java.util.StringTokenizer;
 
 /**
@@ -30,12 +32,14 @@ public class FTPClient {
     private BufferedReader commandResponseReader = null;
     private BufferedWriter commandSender = null;
     private static boolean DEBUG = true;
-    private Socket dataSocket = null;
+    private Socket passiveDataSocket = null;
+    private Socket activeDataSocket = null;
+    private ServerSocket activeModeSocket = null;
     private BufferedReader dataSocketReader = null;
     private BufferedWriter dataSocketWriter = null;
     private String host;
     private int port;
-    //private boolean passive = false;
+    private boolean usingPassive = true; //use passive by default.
 
     public FTPClient() {
 
@@ -48,9 +52,16 @@ public class FTPClient {
     //send data to dataSocket
     //this method should be rewrited to send binary data in mode
     //"TYPE I"
+    private void usePassive() {
+        usingPassive = true;
+    }
+
+    private void useActive() {
+        usingPassive = false;
+    }
 
     private synchronized void sendLineData(String line) throws IOException {
-        if (dataSocket == null) {
+        if (passiveDataSocket == null) {
             throw new IOException("Not connected in PASV");
         }
         try {
@@ -62,24 +73,31 @@ public class FTPClient {
                 }
             }
         } catch (IOException e) {
-            dataSocket = null;
+            passiveDataSocket = null;
             throw e;
         }
 
     }
 
     // read data from dataSocket
+    private synchronized String readLineData() throws IOException, InterruptedException {
+        dataSocketReader.mark(1);
 
-    private String readLineData() throws IOException {
-        String line = dataSocketReader.readLine();
-        if (DEBUG) {
-            System.out.println("PASV RX< " + line);
+        if (dataSocketReader.read() != -1) {
+            dataSocketReader.reset();
+            String line = dataSocketReader.readLine();
+
+            if (DEBUG) {
+                System.out.println("DATA RX< " + line);
+            }
+            wait(10);
+            return line;
         }
-        return line;
+        
+        return null;
     }
 
-    // send data to cmd socket
-
+// send data to cmd socket
     private void sendCommand(String line) throws IOException {
         if (commandSocket == null) {
             throw new IOException("Not connected!");
@@ -97,9 +115,14 @@ public class FTPClient {
     }
 
     // get data from cmd socket
-
-    private String readResponse() throws IOException {
-        String line = commandResponseReader.readLine();
+    private synchronized String readResponse() throws IOException, InterruptedException {
+        String line = null;
+        commandResponseReader.mark(2);
+        
+         if(commandResponseReader.read() != -1) {
+             commandResponseReader.reset();
+             line = commandResponseReader.readLine();
+         }
         if (DEBUG) {
             System.out.println("RX< " + line);
         }
@@ -107,14 +130,16 @@ public class FTPClient {
     }
 
     // connect to server 'hostname'
-    public synchronized void connect(String host) throws IOException {
+    public synchronized void connect(String host) throws IOException, InterruptedException {
         connect(host, 21, "anonymous", "anonymous@anonymous.domain");
     }
-    public synchronized void connect(String host, int port) throws IOException {
+
+    public synchronized void connect(String host, int port) throws IOException, InterruptedException {
         connect(host, port, "anonymous", "anonymous@anonymous.domain");
     }
+
     public synchronized void connect(String host, int port, String user, String pass)
-            throws IOException {
+            throws IOException, InterruptedException {
         if (commandSocket != null) {
             throw new IOException("Already connected, disconnect first.");
         }
@@ -124,13 +149,16 @@ public class FTPClient {
         commandResponseReader = new BufferedReader(new InputStreamReader(commandSocket.getInputStream()));
         commandSender = new BufferedWriter(new OutputStreamWriter(commandSocket.getOutputStream()));
         String response = "";
-
-        while (!response.equals("220 ") && !response.equals("220 OK")) {
+        
+        while (!response.equals("220 ") && !response.equals("220 OK") && !response.startsWith("220 ")) {
             response = readResponse();
+            
         }
+
         if (!response.startsWith("220")) {
             throw new IOException("Unknown response: " + response);
         }
+
         sendCommand("USER " + user);
         response = readResponse();
         if (!response.startsWith("331")) {
@@ -144,14 +172,13 @@ public class FTPClient {
         //now logged in.
     }
 
-    public synchronized void syst() throws IOException {
+    public synchronized void syst() throws IOException, InterruptedException {
         sendCommand("SYST");
         readResponse();
     }
 
     // disconnect from server
-
-    public synchronized void disconnect() throws IOException {
+    public synchronized void disconnect() throws IOException, InterruptedException {
         try {
             sendCommand("QUIT");
             readResponse();
@@ -161,8 +188,7 @@ public class FTPClient {
     }
 
     // CWD command
-
-    public synchronized void cd(String dir) throws IOException {
+    public synchronized void cd(String dir) throws IOException, InterruptedException {
         sendCommand("CWD " + dir);
         readResponse();
         sendCommand("PWD");
@@ -171,8 +197,7 @@ public class FTPClient {
 
     //tell FTP server to switch to passive mode.
     //opens 2nd socket for data transfer.
-
-    public synchronized boolean enterPasv() throws IOException {
+    public synchronized boolean enterPasv() throws IOException, InterruptedException {
         sendCommand("PASV");
         String response = readResponse();
         String ip = "";
@@ -191,75 +216,108 @@ public class FTPClient {
                 throw new IOException("badDataLink: " + response);
             }
         }
-        dataSocket = new Socket(ip, port);
-        dataSocketReader = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
-        dataSocketWriter = new BufferedWriter(new OutputStreamWriter(dataSocket.getOutputStream()));
+        passiveDataSocket = new Socket(ip, port);
+        dataSocketReader = new BufferedReader(new InputStreamReader(passiveDataSocket.getInputStream()));
+        dataSocketWriter = new BufferedWriter(new OutputStreamWriter(passiveDataSocket.getOutputStream()));
+
+        usingPassive = true;
         return true;
     }
 
     // command: RETR fileName
-
-    public synchronized boolean retr(String fileName) throws IOException {
-        enterPasv();
-        sendCommand("TYPE I"); // switch to binary mode
-        String response = readResponse();
-        if (!response.startsWith("200")) {
-            throw new IOException("Cannot switch to binary mode, server reported:\n" + response);
-        }
-        sendCommand("RETR " + fileName);
-        response = readResponse();
-        if (!response.startsWith("150")) {
-            throw new IOException("Cannot retrieve file... Server reported:\n" + response);
-        }
-        FileOutputStream out = new FileOutputStream(fileName);
-        BufferedInputStream dataIn = new BufferedInputStream(dataSocket.getInputStream());
-        int bufferSize = 4096;
-        byte[] inputBuffer = new byte[bufferSize];
-        int i = 0;
-        int c = 0;
-        int offset = 0;
-        System.out.print("Downloading: [");
-        while ((i = dataIn.read(inputBuffer, 0, bufferSize)) != -1) {
-            out.write(inputBuffer, 0, i);
-
-            if (c % 32768 == 0) {
-                c = 0;
-                System.out.print(".");
+    public synchronized boolean retr(String fileName) throws IOException, InterruptedException {
+        if (usingPassive) {
+            enterPasv();
+            sendCommand("TYPE I"); // switch to binary mode
+            String response = readResponse();
+            if (!response.startsWith("200")) {
+                throw new IOException("Cannot switch to binary mode, server reported:\n" + response);
             }
-            c++;
+            sendCommand("RETR " + fileName);
+            response = readResponse();
+            if (!response.startsWith("150")) {
+                throw new IOException("Cannot retrieve file... Server reported:\n" + response);
+            }
+            FileOutputStream out = new FileOutputStream(fileName);
+            BufferedInputStream dataIn = new BufferedInputStream(passiveDataSocket.getInputStream());
+            int bufferSize = 4096;
+            byte[] inputBuffer = new byte[bufferSize];
+            int i = 0;
+            int c = 0;
+            int offset = 0;
+            System.out.print("Downloading: [");
+            while ((i = dataIn.read(inputBuffer, 0, bufferSize)) != -1) {
+                out.write(inputBuffer, 0, i);
+
+                if (c % 32768 == 0) {
+                    c = 0;
+                    System.out.print(".");
+                }
+                c++;
+            }
+            System.out.print("]\nDownload Completed.\n");
+            return (readResponse().startsWith("226"));
         }
-        System.out.print("]\nDownload Completed.\n");
-        return (readResponse().startsWith("226"));
+        return false;
     }
 
     // cmd LIST
-
-    public synchronized boolean list() throws IOException {
-        if (enterPasv()) {
+    public synchronized boolean list() throws IOException, InterruptedException {
+        if (usingPassive) {
+            String r = "";
+            enterPasv();
+            sendCommand("TYPE A");
+            readResponse();
             sendCommand("LIST");
             String response = readResponse();
             if (response.startsWith("150")) {
-                while (readLineData() != null) {
-                }
+                do {
+                    r = readLineData();
+                } while (r != null);
                 readResponse();
                 return true;
             }
-            return false;
         } else {
-            return false;
+            String r = "";
+            sendCommand("TYPE A");
+            readResponse();
+            sendCommand("LIST");
+            acceptOnActive();
+            String response = readResponse();
+            if (response.startsWith("150")) {
+                do {
+                    r = readLineData();
+                    
+                } while (r != null);
+                
+                readResponse();
+                return true;
+            }
         }
+        return false;
     }
-    // currently unimplemented. use only passive mode
-/*    public synchronized boolean port(int port) throws IOException{
-     String ip = "150,254,106,92";
-     int portB = port % 256;
-     int portA = (port - portB) / 256;
-     String cmd = "=" + ip + "," + Integer.toString(portA) + "," + Integer.toString(portB);
-     sendLine("PORT "+cmd);
-     readLine();
-     dataSocket = new Socket("localhost", port);
-     readLineData();
-     return true;
-     }*/
+
+    private synchronized void acceptOnActive() throws IOException {
+        if(activeDataSocket==null) activeDataSocket = activeModeSocket.accept();
+        dataSocketReader = new BufferedReader(new InputStreamReader(activeDataSocket.getInputStream()));
+        dataSocketWriter = new BufferedWriter(new OutputStreamWriter(activeDataSocket.getOutputStream()));
+        
+    }
+
+    // sends port command.
+
+    public boolean port(int port) throws IOException, InterruptedException {
+        String ip = "127,0,0,1";
+        int portB = port % 256;
+        int portA = (port - portB) / 256;
+        String cmd = ip + "," + Integer.toString(portA) + "," + Integer.toString(portB);
+        sendCommand("PORT " + cmd);
+
+        activeModeSocket = new ServerSocket(port);
+        readResponse();
+        usingPassive = false;
+
+        return true;
+    }
 
 }
