@@ -5,6 +5,7 @@
  */
 package ftpclient;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -21,8 +22,9 @@ public class MainClass {
         String pass = "anon@anon";
         client.connect(host, port, user, pass);
         client.useActiveOnPort(49200);
-        client.retr("welcome.msg");
-        client.retr("welcome.msg");
+        File dest = new File("/home/lupus/welcome.msg");
+        client.retr("welcome.msg", dest);
+        client.list("NLST");
         /*
         client.list();
         client.cwd("/pub/os/Linux/distr/linuxmint/iso/stable/debian/");
