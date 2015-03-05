@@ -15,22 +15,19 @@ public class MainClass {
 
     public static void main(String args[]) throws IOException, InterruptedException {
         FTPClient client = new FTPClient();
-        String host = "ftp.nluug.nl";
+        String host = "localhost";
         int port = 21;
         String user = "anonymous";
-        String pass = "anon@anon.passwords.com";
+        String pass = "anon@anon";
         client.connect(host, port, user, pass);
-        //client.port(49200);
-        client.syst();
+        client.useActiveOnPort(49200);
+        client.retr("welcome.msg");
+        client.retr("welcome.msg");
+        /*
         client.list();
-        //client.retr("darkforest.jpg");
-        //client.cd("/pub/os/Linux/distr/tinycorelinux/6.x/x86/release/");
-        //client.list();
-        //client.retr("TinyCore-6.0.iso");
-        //client.retr("TinyCore-6.0.iso.md5.txt");
-        //client.cup();
-        // client.cd("/pub/os/Linux/distr/linuxmint/iso/stable/debian/");
-        // client.retr("linuxmint-xfce-201104-dvd-64bit.iso");
+        client.cwd("/pub/os/Linux/distr/linuxmint/iso/stable/debian/");
+        client.retr("linuxmint-xfce-201104-dvd-64bit.iso");
+                */
         client.disconnect();
 
     }
