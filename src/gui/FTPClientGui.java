@@ -57,15 +57,24 @@ public class FTPClientGui extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        txtFieldHostName.setFont(new java.awt.Font("FreeMono", 0, 18)); // NOI18N
+
         hostLabe.setText("hostname or IP address:");
 
         colonLabel.setText(":");
 
+        txtFieldPort.setFont(new java.awt.Font("FreeMono", 0, 18)); // NOI18N
+        txtFieldPort.setText("21");
+
         portLabel.setText("port");
+
+        txtFieldUsername.setFont(new java.awt.Font("FreeMono", 0, 18)); // NOI18N
 
         userLabel.setText("username:");
 
         passwordLabel.setText("password:");
+
+        pwdFieldPassword.setFont(new java.awt.Font("FreeMono", 0, 18)); // NOI18N
 
         btnConnectDisconnect.setText("connect / disconnect");
         btnConnectDisconnect.addActionListener(new java.awt.event.ActionListener() {
@@ -73,6 +82,9 @@ public class FTPClientGui extends javax.swing.JFrame {
                 btnConnectDisconnectActionPerformed(evt);
             }
         });
+
+        cmdField.setFont(new java.awt.Font("FreeMono", 0, 18)); // NOI18N
+        cmdField.setCaretColor(new java.awt.Color(255, 255, 255));
 
         jLabel1.setText("cmd:");
 
@@ -84,7 +96,7 @@ public class FTPClientGui extends javax.swing.JFrame {
         });
 
         logger.setColumns(20);
-        logger.setFont(new java.awt.Font("FreeMono", 0, 11)); // NOI18N
+        logger.setFont(new java.awt.Font("FreeMono", 0, 18)); // NOI18N
         logger.setLineWrap(true);
         logger.setRows(5);
         jScrollPane1.setViewportView(logger);
@@ -107,15 +119,15 @@ public class FTPClientGui extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(txtFieldUsername)
-                                    .addComponent(txtFieldHostName)
-                                    .addComponent(pwdFieldPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE))
+                                    .addComponent(pwdFieldPassword)
+                                    .addComponent(txtFieldHostName, javax.swing.GroupLayout.PREFERRED_SIZE, 286, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGap(4, 4, 4)
+                                        .addGap(0, 0, 0)
                                         .addComponent(colonLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(txtFieldPort, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(2, 2, 2)
+                                        .addComponent(txtFieldPort, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(portLabel))
                                     .addGroup(layout.createSequentialGroup()
                                         .addGap(18, 18, 18)
@@ -127,7 +139,7 @@ public class FTPClientGui extends javax.swing.JFrame {
                                 .addComponent(cmdField, javax.swing.GroupLayout.PREFERRED_SIZE, 442, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(btnSend)))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(0, 285, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1)))
@@ -160,7 +172,7 @@ public class FTPClientGui extends javax.swing.JFrame {
                     .addComponent(jLabel1)
                     .addComponent(btnSend))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 271, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 489, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -168,7 +180,7 @@ public class FTPClientGui extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnConnectDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectDisconnectActionPerformed
-        if (!connected) {
+        if (!client.isConnected()) {
             int port;
             String host;
             String user = null;
@@ -196,6 +208,7 @@ public class FTPClientGui extends javax.swing.JFrame {
             } catch (InterruptedException ie) {
                 JOptionPane.showMessageDialog(this, "Interrupted Exception occured");
             }
+            
         } else {
             try {
                 client.disconnect();
@@ -203,7 +216,7 @@ public class FTPClientGui extends javax.swing.JFrame {
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
             }
-
+            
         }
     }//GEN-LAST:event_btnConnectDisconnectActionPerformed
 
@@ -249,6 +262,7 @@ public class FTPClientGui extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(this, "Bad command");
                     break;
             }
+            this.cmdField.setText("");
         } catch (IOException ex) {
             Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {
@@ -267,7 +281,7 @@ public class FTPClientGui extends javax.swing.JFrame {
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
+                if ("Metal".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }

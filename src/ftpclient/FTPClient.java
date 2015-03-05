@@ -41,13 +41,18 @@ public class FTPClient {
     private BufferedWriter dataSocketWriter = null;
     private String host;
     private int port = 21; //default ftp port
-    private int activePort = 49200; //default use 49200 port for active connection
+    private int activePort = 38600; //default use 49200 port for active connection
     private boolean usingPassive = true; //use passive by default.
     private boolean portCmdGiven = false;
     private JTextArea logger = null;
+    private boolean isConnected = false;
 
     public FTPClient() {
 
+    }
+
+    public boolean isConnected() {
+        return isConnected;
     }
 
     private void logOutput(String text) {
@@ -100,7 +105,7 @@ public class FTPClient {
             if (line != null) {
                 if (WRITE_TO_STD_OUT) {
                     System.out.println("PASV TX> " + line);
-                    logOutput("PASV TX> "+ line);
+                    logOutput("PASV TX> " + line);
                 }
             }
         } catch (IOException e) {
@@ -179,8 +184,12 @@ public class FTPClient {
         commandSocket = new Socket(host, port);
         this.host = host;
         this.port = port;
-        if(user == null) user = "anonymous";
-        if(pass == null) pass = "anonymous@anons.com";
+        if (user == null) {
+            user = "anonymous";
+        }
+        if (pass == null) {
+            pass = "anonymous@anons.com";
+        }
         commandResponseReader = new BufferedReader(new InputStreamReader(commandSocket.getInputStream()));
         commandSender = new BufferedWriter(new OutputStreamWriter(commandSocket.getOutputStream()));
         String response = "";
@@ -210,6 +219,7 @@ public class FTPClient {
         if (!response.startsWith("230")) {
             throw new IOException("Unknown response after sending PASS: " + response);
         }
+        isConnected = true;
         //now logged in.
     }
 
@@ -224,7 +234,15 @@ public class FTPClient {
             sendCommand("QUIT");
             readCommandResponse();
         } finally {
-            commandSocket = null;
+            if (passiveDataSocket != null) {
+                passiveDataSocket.close();
+                passiveDataSocket = null;
+            }
+            if (commandSocket != null) {
+                commandSocket.close();
+                commandSocket = null;
+            }
+            isConnected = false;
         }
     }
 
@@ -242,7 +260,7 @@ public class FTPClient {
         sendCommand("PASV");
         String response = readCommandResponse();
         String ip = "";
-        int port = -1;
+        int pasvPort = -1;
         int opening = response.indexOf('(');
         int closing = response.indexOf(')');
         if (closing > 0) {
@@ -251,13 +269,13 @@ public class FTPClient {
             try {
                 ip = tokenizer.nextToken() + "." + tokenizer.nextToken() + "."
                         + tokenizer.nextToken() + "." + tokenizer.nextToken();
-                port = Integer.parseInt(tokenizer.nextToken()) * 256
+                pasvPort = Integer.parseInt(tokenizer.nextToken()) * 256
                         + Integer.parseInt(tokenizer.nextToken());
             } catch (Exception e) {
                 throw new IOException("badDataLink: " + response);
             }
         }
-        passiveDataSocket = new Socket(ip, port);
+        passiveDataSocket = new Socket(ip, pasvPort);
         dataSocketReader = new BufferedReader(new InputStreamReader(passiveDataSocket.getInputStream()));
         dataSocketWriter = new BufferedWriter(new OutputStreamWriter(passiveDataSocket.getOutputStream()));
         usingPassive = true;
@@ -309,17 +327,17 @@ public class FTPClient {
         int bytesRead;
         int blockCount = 0;
         int offset = 0;
-        System.out.print("Downloading: [");
+        logOutput("Downloading: [");
         while ((bytesRead = dataIn.read(inputBuffer, 0, bufferSize)) != -1) {
             out.write(inputBuffer, 0, bytesRead);
 
             if (blockCount % 32768 == 0) {
                 blockCount = 0;
-                System.out.print(".");
+                logOutput(".");
             }
             blockCount++;
         }
-        System.out.print("]\nDownload Completed.\n");
+        logOutput("]\nDownload Completed.\n");
     }
 
     // cmd LIST
@@ -342,10 +360,14 @@ public class FTPClient {
         if (!switchToAscii()) {
             throw new IOException("Cannot switch to ASCII Mode.");
         }
+        wait(10);
         if (usingPassive) {
             enterPasv();
+            wait(10);
             sendCommand(listCommand);
+            wait(10);
             commandResponse = readCommandResponse();
+            wait(10);
             if (commandResponse.startsWith("150")) {
                 do {
                     dataSocketResponse = readDataResponse();
@@ -382,7 +404,7 @@ public class FTPClient {
     // sends port command.
     // using PASV is better.
     public boolean port(int port) throws IOException, InterruptedException {
-        String ip = "150,254,79,112";
+        String ip = "127,0,0,1";
         int portB = port % 256;
         int portA = (port - portB) / 256;
         String cmd = ip + "," + Integer.toString(portA) + "," + Integer.toString(portB);
