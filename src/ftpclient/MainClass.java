@@ -16,14 +16,14 @@ public class MainClass {
 
     public static void main(String args[]) throws IOException, InterruptedException {
         FTPClient client = new FTPClient();
-        String host = "localhost";
+        String host = "ftp.nluug.nl";
         int port = 21;
         String user = "anonymous";
         String pass = "anon@anon";
         client.connect(host, port, user, pass);
-        client.useActiveOnPort(49200);
+        client.usePassive();
         File dest = new File("/home/lupus/welcome.msg");
-        client.retr("welcome.msg", dest);
+        //client.retr("welcome.msg", dest);
         client.list("NLST");
         /*
         client.list();

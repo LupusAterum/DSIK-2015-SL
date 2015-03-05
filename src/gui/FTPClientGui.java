@@ -5,17 +5,28 @@
  */
 package gui;
 
+import ftpclient.FTPClient;
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author lupus
  */
 public class FTPClientGui extends javax.swing.JFrame {
 
+    private final FTPClient client = new FTPClient();
     /**
      * Creates new form FTPClientGui
      */
+    private boolean connected = false;
+
     public FTPClientGui() {
         initComponents();
+        client.setOutputTo(logger);
     }
 
     /**
@@ -36,13 +47,13 @@ public class FTPClientGui extends javax.swing.JFrame {
         userLabel = new javax.swing.JLabel();
         passwordLabel = new javax.swing.JLabel();
         pwdFieldPassword = new javax.swing.JPasswordField();
-        jButton1 = new javax.swing.JButton();
+        btnConnectDisconnect = new javax.swing.JButton();
         cmdField = new javax.swing.JTextField();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel1 = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
+        btnSend = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        logger = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -56,17 +67,27 @@ public class FTPClientGui extends javax.swing.JFrame {
 
         passwordLabel.setText("password:");
 
-        jButton1.setText("connect / disconnect");
+        btnConnectDisconnect.setText("connect / disconnect");
+        btnConnectDisconnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnConnectDisconnectActionPerformed(evt);
+            }
+        });
 
         jLabel1.setText("cmd:");
 
-        jButton2.setText("send");
+        btnSend.setText("send");
+        btnSend.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSendActionPerformed(evt);
+            }
+        });
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setFont(new java.awt.Font("FreeMono", 0, 11)); // NOI18N
-        jTextArea1.setLineWrap(true);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
+        logger.setColumns(20);
+        logger.setFont(new java.awt.Font("FreeMono", 0, 11)); // NOI18N
+        logger.setLineWrap(true);
+        logger.setRows(5);
+        jScrollPane1.setViewportView(logger);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -98,14 +119,14 @@ public class FTPClientGui extends javax.swing.JFrame {
                                         .addComponent(portLabel))
                                     .addGroup(layout.createSequentialGroup()
                                         .addGap(18, 18, 18)
-                                        .addComponent(jButton1))))
+                                        .addComponent(btnConnectDisconnect))))
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(13, 13, 13)
                                 .addComponent(jLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdField, javax.swing.GroupLayout.PREFERRED_SIZE, 442, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton2)))
+                                .addComponent(btnSend)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
@@ -130,14 +151,14 @@ public class FTPClientGui extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(passwordLabel)
                     .addComponent(pwdFieldPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
+                    .addComponent(btnConnectDisconnect))
                 .addGap(18, 18, 18)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 11, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1)
-                    .addComponent(jButton2))
+                    .addComponent(btnSend))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 271, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -145,6 +166,95 @@ public class FTPClientGui extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnConnectDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectDisconnectActionPerformed
+        if (!connected) {
+            int port;
+            String host;
+            String user = null;
+            String pass = null;
+            if (txtFieldHostName.getText().equals("") || txtFieldPort.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "Invalid hostname and port");
+                return;
+            }
+            if (!txtFieldUsername.getText().equals("") && (new String(pwdFieldPassword.getPassword()).equals(""))) {
+                JOptionPane.showMessageDialog(this, "No password specified. Leave user and pass blank for anonymous login.");
+                return;
+            }
+            try {
+                port = Integer.parseInt(txtFieldPort.getText());
+                host = txtFieldHostName.getText();
+                if (!txtFieldUsername.getText().equals("")) {
+                    user = txtFieldUsername.getText();
+                    pass = new String(pwdFieldPassword.getPassword());
+                }
+                client.connect(host, port, user, pass);
+            } catch (NumberFormatException nfe) {
+                JOptionPane.showMessageDialog(this, "Invalid port number");
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "IO Exception, check log");
+            } catch (InterruptedException ie) {
+                JOptionPane.showMessageDialog(this, "Interrupted Exception occured");
+            }
+        } else {
+            try {
+                client.disconnect();
+                JOptionPane.showMessageDialog(this, "Disconnected");
+            } catch (IOException | InterruptedException ex) {
+                Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }
+    }//GEN-LAST:event_btnConnectDisconnectActionPerformed
+
+    private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
+        try {
+            String command = cmdField.getText();
+            if (command.equals("")) {
+                JOptionPane.showMessageDialog(this, "No command specified");
+                return;
+            }
+            String params[] = command.split(" ");
+            switch (params[0]) {
+                case "QUIT":
+                    client.disconnect();
+                    break;
+                case "NLST":
+                    client.list("NLST");
+                    break;
+                case "LIST":
+                    client.list("LIST");
+                    break;
+                case "PASV":
+                    client.enterPasv();
+                    break;
+                case "RETR":
+                    if (params.length > 1) {
+                        client.retr(params[1], null);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "No filename given");
+                    }
+                    break;
+                case "CWD":
+                    if (params.length > 1) {
+                        client.cwd(params[1]);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "No folder name given");
+                    }
+                    break;
+                case "CUP":
+                    client.cwd("..");
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(this, "Bad command");
+                    break;
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnSendActionPerformed
 
     /**
      * @param args the command line arguments
@@ -182,15 +292,15 @@ public class FTPClientGui extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnConnectDisconnect;
+    private javax.swing.JButton btnSend;
     private javax.swing.JTextField cmdField;
     private javax.swing.JLabel colonLabel;
     private javax.swing.JLabel hostLabe;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
-    public javax.swing.JTextArea jTextArea1;
+    public javax.swing.JTextArea logger;
     private javax.swing.JLabel passwordLabel;
     private javax.swing.JLabel portLabel;
     private javax.swing.JPasswordField pwdFieldPassword;

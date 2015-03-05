@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.util.StringTokenizer;
+import javax.swing.JTextArea;
 
 /**
  *
@@ -32,7 +33,7 @@ public class FTPClient {
     private Socket commandSocket = null;
     private BufferedReader commandResponseReader = null;
     private BufferedWriter commandSender = null;
-    private static boolean DEBUG = true;
+    private static boolean WRITE_TO_STD_OUT = false;
     private Socket passiveDataSocket = null;
     private Socket activeDataSocket = null;
     private ServerSocket activeModeSocket = null;
@@ -43,13 +44,26 @@ public class FTPClient {
     private int activePort = 49200; //default use 49200 port for active connection
     private boolean usingPassive = true; //use passive by default.
     private boolean portCmdGiven = false;
+    private JTextArea logger = null;
 
     public FTPClient() {
 
     }
 
-    public void switchDebugInfo() {
-        DEBUG = !(DEBUG);
+    private void logOutput(String text) {
+        if (logger == null) {
+            WRITE_TO_STD_OUT = true;
+        } else {
+            logger.append(text + "\n");
+        }
+    }
+
+    public void setOutputTo(JTextArea area) {
+        logger = area;
+    }
+
+    public void switchStdOutput() {
+        WRITE_TO_STD_OUT = !(WRITE_TO_STD_OUT);
     }
 
     public synchronized void usePassive() throws IOException {
@@ -83,9 +97,10 @@ public class FTPClient {
         try {
             dataSocketWriter.write(line + "\r\n");
             dataSocketWriter.flush();
-            if (DEBUG) {
-                if (line != null) {
+            if (line != null) {
+                if (WRITE_TO_STD_OUT) {
                     System.out.println("PASV TX> " + line);
+                    logOutput("PASV TX> "+ line);
                 }
             }
         } catch (IOException e) {
@@ -102,8 +117,8 @@ public class FTPClient {
         if (dataSocketReader.read() != -1) {
             dataSocketReader.reset();
             String line = dataSocketReader.readLine();
-
-            if (DEBUG) {
+            logOutput("DATA RX<" + line);
+            if (WRITE_TO_STD_OUT) {
                 System.out.println("DATA RX< " + line);
             }
             wait(10);
@@ -121,7 +136,8 @@ public class FTPClient {
         try {
             commandSender.write(line + "\r\n");
             commandSender.flush();
-            if (DEBUG) {
+            logOutput("TX>" + line);
+            if (WRITE_TO_STD_OUT) {
                 System.out.println("TX> " + line);
             }
         } catch (IOException e) {
@@ -139,7 +155,8 @@ public class FTPClient {
             commandResponseReader.reset();
             line = commandResponseReader.readLine();
         }
-        if (DEBUG) {
+        logOutput("RX<" + line);
+        if (WRITE_TO_STD_OUT) {
             System.out.println("RX< " + line);
         }
         return line;
@@ -162,6 +179,8 @@ public class FTPClient {
         commandSocket = new Socket(host, port);
         this.host = host;
         this.port = port;
+        if(user == null) user = "anonymous";
+        if(pass == null) pass = "anonymous@anons.com";
         commandResponseReader = new BufferedReader(new InputStreamReader(commandSocket.getInputStream()));
         commandSender = new BufferedWriter(new OutputStreamWriter(commandSocket.getOutputStream()));
         String response = "";
@@ -244,18 +263,18 @@ public class FTPClient {
         usingPassive = true;
         return true;
     }
-    
+
     // command: RETR fileName
     public synchronized boolean retr(String fileName, File destination) throws IOException, InterruptedException {
-        if (destination==null) {
+        if (destination == null) {
             destination = new File(fileName);
         } else {
-            
+
         }
         if (!switchToBinary()) {
             throw new IOException("Cannot switch to binary mode.");
         }
-        
+
         String commandResponse;
         if (usingPassive) {
 
@@ -363,7 +382,7 @@ public class FTPClient {
     // sends port command.
     // using PASV is better.
     public boolean port(int port) throws IOException, InterruptedException {
-        String ip = "127,0,0,1";
+        String ip = "150,254,79,112";
         int portB = port % 256;
         int portA = (port - portB) / 256;
         String cmd = ip + "," + Integer.toString(portA) + "," + Integer.toString(portB);

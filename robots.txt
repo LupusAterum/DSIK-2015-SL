@@ -1,0 +1,13 @@
+Sitemap: http://ftp.nluug.nl/sitemap_index.xml
+
+User-agent: MJ12bot
+Crawl-Delay: 10
+
+user-agent: AhrefsBot
+Crawl-Delay: 10
+
+User-agent: Exabot
+Crawl-Delay: 10
+
+User-Agent: bingbot
+Crawl-Delay: 10
