@@ -17,7 +17,26 @@ import javax.swing.JOptionPane;
  * @author lupus
  */
 public class FTPClientGui extends javax.swing.JFrame {
-
+    
+    private class FTPDownloader implements Runnable {
+        String fileName;
+        public FTPDownloader(String fileName) {
+            this.fileName = fileName;
+        }
+        @Override
+        public void run()  {
+            try {
+                client.retr(fileName, null);
+                
+            } catch (IOException ex) {
+                Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+        
+    }
     private final FTPClient client = new FTPClient();
     /**
      * Creates new form FTPClientGui
@@ -243,7 +262,11 @@ public class FTPClientGui extends javax.swing.JFrame {
                     break;
                 case "RETR":
                     if (params.length > 1) {
-                        client.retr(params[1], null);
+                        Runnable downloadRunner = new FTPDownloader(params[1]);
+                        Thread downloadThread = new Thread(downloadRunner);
+                        downloadThread.start();
+                        
+                                //client.retr(params[1], null);
                     } else {
                         JOptionPane.showMessageDialog(this, "No filename given");
                     }

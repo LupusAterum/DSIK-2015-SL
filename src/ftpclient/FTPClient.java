@@ -59,7 +59,7 @@ public class FTPClient {
         if (logger == null) {
             WRITE_TO_STD_OUT = true;
         } else {
-            logger.append(text + "\n");
+            logger.append(text);
         }
     }
 
@@ -105,7 +105,7 @@ public class FTPClient {
             if (line != null) {
                 if (WRITE_TO_STD_OUT) {
                     System.out.println("PASV TX> " + line);
-                    logOutput("PASV TX> " + line);
+                    logOutput("PASV TX> " + line + "\n");
                 }
             }
         } catch (IOException e) {
@@ -122,7 +122,7 @@ public class FTPClient {
         if (dataSocketReader.read() != -1) {
             dataSocketReader.reset();
             String line = dataSocketReader.readLine();
-            logOutput("DATA RX<" + line);
+            logOutput("DATA RX<" + line + "\n");
             if (WRITE_TO_STD_OUT) {
                 System.out.println("DATA RX< " + line);
             }
@@ -141,7 +141,7 @@ public class FTPClient {
         try {
             commandSender.write(line + "\r\n");
             commandSender.flush();
-            logOutput("TX>" + line);
+            logOutput("TX>" + line + "\n");
             if (WRITE_TO_STD_OUT) {
                 System.out.println("TX> " + line);
             }
@@ -160,7 +160,7 @@ public class FTPClient {
             commandResponseReader.reset();
             line = commandResponseReader.readLine();
         }
-        logOutput("RX<" + line);
+        logOutput("RX<" + line + "\n");
         if (WRITE_TO_STD_OUT) {
             System.out.println("RX< " + line);
         }
