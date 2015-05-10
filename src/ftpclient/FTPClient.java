@@ -42,7 +42,7 @@ public class FTPClient {
     private String host;
     private String activeModeIP;
     private int port = 21; //default ftp port
-    private int activePort = 38600; //default use 49200 port for active connection
+    private int activePort = 38600; //default use 38600 port for active connection
     private boolean usingPassive = true; //use passive by default.
     private boolean portCmdGiven = false;
     private JTextArea logger = null;
@@ -419,7 +419,6 @@ public class FTPClient {
         sendCommand("PORT " + cmd);
 
         createIncomingActiveDataSocket(port);
-        acceptOnActiveDataSocket();
         readCommandResponse();
         portCmdGiven = true;
 
