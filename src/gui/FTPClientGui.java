@@ -17,25 +17,28 @@ import javax.swing.JOptionPane;
  * @author lupus
  */
 public class FTPClientGui extends javax.swing.JFrame {
-    
+
     private class FTPDownloader implements Runnable {
+
         String fileName;
+
         public FTPDownloader(String fileName) {
             this.fileName = fileName;
         }
+
         @Override
-        public void run()  {
+        public void run() {
             try {
                 client.retr(fileName, null);
-                
+
             } catch (IOException ex) {
                 Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
             } catch (InterruptedException ex) {
                 Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
         }
-        
+
     }
     private final FTPClient client = new FTPClient();
     /**
@@ -73,6 +76,9 @@ public class FTPClientGui extends javax.swing.JFrame {
         btnSend = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         logger = new javax.swing.JTextArea();
+        activeIPField = new javax.swing.JTextField();
+        activePortField = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -103,7 +109,6 @@ public class FTPClientGui extends javax.swing.JFrame {
         });
 
         cmdField.setFont(new java.awt.Font("FreeMono", 0, 18)); // NOI18N
-        cmdField.setCaretColor(new java.awt.Color(255, 255, 255));
 
         jLabel1.setText("cmd:");
 
@@ -120,6 +125,10 @@ public class FTPClientGui extends javax.swing.JFrame {
         logger.setRows(5);
         jScrollPane1.setViewportView(logger);
 
+        activePortField.setText("38600");
+
+        jLabel2.setText("IP and port for active transfer");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -128,37 +137,40 @@ public class FTPClientGui extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(hostLabe)
+                            .addComponent(userLabel)
+                            .addComponent(passwordLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(txtFieldUsername)
+                            .addComponent(pwdFieldPassword)
+                            .addComponent(txtFieldHostName, javax.swing.GroupLayout.PREFERRED_SIZE, 286, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(hostLabe)
-                                    .addComponent(userLabel)
-                                    .addComponent(passwordLabel))
+                                .addGap(18, 18, 18)
+                                .addComponent(btnConnectDisconnect)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(colonLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtFieldPort, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(portLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtFieldUsername)
-                                    .addComponent(pwdFieldPassword)
-                                    .addComponent(txtFieldHostName, javax.swing.GroupLayout.PREFERRED_SIZE, 286, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(0, 0, 0)
-                                        .addComponent(colonLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(txtFieldPort, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(portLabel))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(18, 18, 18)
-                                        .addComponent(btnConnectDisconnect))))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(13, 13, 13)
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdField, javax.swing.GroupLayout.PREFERRED_SIZE, 442, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSend)))
-                        .addGap(0, 285, Short.MAX_VALUE))
+                                    .addComponent(activePortField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
+                                    .addComponent(activeIPField, javax.swing.GroupLayout.Alignment.TRAILING)))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(13, 13, 13)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdField, javax.swing.GroupLayout.PREFERRED_SIZE, 442, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnSend))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1)))
@@ -167,17 +179,24 @@ public class FTPClientGui extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtFieldHostName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(hostLabe)
-                    .addComponent(colonLabel)
-                    .addComponent(txtFieldPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(portLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtFieldUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(userLabel))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtFieldHostName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(hostLabe)
+                            .addComponent(colonLabel)
+                            .addComponent(txtFieldPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(portLabel)
+                            .addComponent(activeIPField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtFieldUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(userLabel)
+                            .addComponent(activePortField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(31, 31, 31)
+                        .addComponent(jLabel2)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(passwordLabel)
@@ -227,7 +246,7 @@ public class FTPClientGui extends javax.swing.JFrame {
             } catch (InterruptedException ie) {
                 JOptionPane.showMessageDialog(this, "Interrupted Exception occured");
             }
-            
+
         } else {
             try {
                 client.disconnect();
@@ -235,7 +254,7 @@ public class FTPClientGui extends javax.swing.JFrame {
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(FTPClientGui.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
         }
     }//GEN-LAST:event_btnConnectDisconnectActionPerformed
 
@@ -265,8 +284,6 @@ public class FTPClientGui extends javax.swing.JFrame {
                         Runnable downloadRunner = new FTPDownloader(params[1]);
                         Thread downloadThread = new Thread(downloadRunner);
                         downloadThread.start();
-                        
-                                //client.retr(params[1], null);
                     } else {
                         JOptionPane.showMessageDialog(this, "No filename given");
                     }
@@ -281,6 +298,18 @@ public class FTPClientGui extends javax.swing.JFrame {
                 case "CUP":
                     client.cwd("..");
                     break;
+                case "PORT":
+                    if (this.activeIPField.getText().equals("") || this.activePortField.getText().equals("")) {
+                        JOptionPane.showMessageDialog(this, "No IP or port for active file transfer");
+                    } else {
+                        client.setActiveIP(this.activeIPField.getText());
+                        try {
+                            client.useActiveOnPort(Integer.parseInt(this.activePortField.getText()));
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(this, "PORT command error, switching to PASV");
+                            client.usePassive();
+                        }
+                    }
                 default:
                     JOptionPane.showMessageDialog(this, "Bad command");
                     break;
@@ -329,12 +358,15 @@ public class FTPClientGui extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField activeIPField;
+    private javax.swing.JTextField activePortField;
     private javax.swing.JButton btnConnectDisconnect;
     private javax.swing.JButton btnSend;
     private javax.swing.JTextField cmdField;
     private javax.swing.JLabel colonLabel;
     private javax.swing.JLabel hostLabe;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     public javax.swing.JTextArea logger;

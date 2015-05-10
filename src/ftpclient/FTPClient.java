@@ -40,6 +40,7 @@ public class FTPClient {
     private BufferedReader dataSocketReader = null;
     private BufferedWriter dataSocketWriter = null;
     private String host;
+    private String activeModeIP;
     private int port = 21; //default ftp port
     private int activePort = 38600; //default use 49200 port for active connection
     private boolean usingPassive = true; //use passive by default.
@@ -76,13 +77,19 @@ public class FTPClient {
         usingPassive = true;
     }
 
-    public synchronized void useActiveOnPort(int port) throws IOException, InterruptedException {
+    public synchronized void useActiveOnPort(int port) throws Exception, IOException, InterruptedException {
+        if(this.activeModeIP.isEmpty() || this.activeModeIP.equals("127,0,0,1") ) {
+            throw new Exception("ERR: NO ACTIVE IP");
+        }
         activePort = port;
         port(activePort);
         portCmdGiven = true;
         usingPassive = false;
     }
-
+    public synchronized void setActiveIP(String IP) {
+        this.activeModeIP = IP.replace(".", ",");
+        
+    }
     private synchronized void closeActiveDataModeSockets() throws IOException {
         if (activeModeSocket != null) {
             activeDataSocket.close();
@@ -404,13 +411,15 @@ public class FTPClient {
     // sends port command.
     // using PASV is better.
     public boolean port(int port) throws IOException, InterruptedException {
-        String ip = "127,0,0,1";
+        
+        
         int portB = port % 256;
         int portA = (port - portB) / 256;
-        String cmd = ip + "," + Integer.toString(portA) + "," + Integer.toString(portB);
+        String cmd = this.activeModeIP + "," + Integer.toString(portA) + "," + Integer.toString(portB);
         sendCommand("PORT " + cmd);
 
         createIncomingActiveDataSocket(port);
+        acceptOnActiveDataSocket();
         readCommandResponse();
         portCmdGiven = true;
 
