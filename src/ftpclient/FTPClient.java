@@ -78,7 +78,7 @@ public class FTPClient {
     }
 
     public synchronized void useActiveOnPort(int port) throws Exception, IOException, InterruptedException {
-        if(this.activeModeIP.isEmpty() || this.activeModeIP.equals("127,0,0,1") ) {
+        if(this.activeModeIP.isEmpty() ) {
             throw new Exception("ERR: NO ACTIVE IP");
         }
         activePort = port;

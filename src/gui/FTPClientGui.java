@@ -309,6 +309,7 @@ public class FTPClientGui extends javax.swing.JFrame {
                             JOptionPane.showMessageDialog(this, "PORT command error, switching to PASV");
                             client.usePassive();
                         }
+                        break;
                     }
                 default:
                     JOptionPane.showMessageDialog(this, "Bad command");
